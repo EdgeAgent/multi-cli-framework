@@ -46,10 +46,38 @@ Text capture: [`docs/screenshots/tui-battle.txt`](docs/screenshots/tui-battle.tx
 
 > **Windows note:** the PNGs above are rendered from the real
 > `watch --panes` text output (same layout, same data) because this
-> build machine has no Windows terminal render. On Windows, run
-> `python run.py tui` for the interactive curses/ANSI UI — the pane
-> layout is identical, and a real Windows screenshot is still needed
-> to prove it renders there (see Honest status).
+> build machine has no Windows terminal render. On Windows, the
+> static fallback is what `run.py tui` shows (menu bar, help text,
+> numbered agents, exact CLI commands) — the EASY path on Windows
+> is the clickable dashboard: `python run.py dashboard`, then open
+> http://127.0.0.1:8767. A real Windows screenshot of the dashboard
+> is still needed to prove it renders there (see Honest status).
+
+## The easy UI — dashboard first, TUI second
+
+```bash
+python3 run.py dashboard   # clickable tabs, buttons, forms — http://127.0.0.1:8767 (local-only)
+python3 run.py tui          # interactive curses TUI where curses exists, useful static render otherwise
+python3 run.py help         # full help screen: keys, tabs, approval rule, Start Here
+```
+
+**UI ease rating, honestly: 8/10** (was ~4/10). What got it there:
+clickable dashboard tabs, click-to-select agents with per-agent
+buttons, a two-step-confirm Kill Switch, forms for environments /
+goals / tasks / deliverables / cron, a search/filter box, a Start
+Here guide when nothing exists, plain-language status, a help
+overlay (`?`), a menu bar and plain-word bottom bar in the TUI,
+and a static Windows render that still tells you the exact CLI
+command for each action. The dashboard and TUI read/write the same
+`state.json`, so CLI, TUI, and dashboard stay in sync.
+
+**What is NOT 10/10 yet, and why:** no packaged desktop app or
+one-click installer; no mouse support in the terminal TUI; no real
+Windows curses (stock Windows Python has no curses — the dashboard
+is the workaround, not a fix); no one-click approve (deliberate —
+the approval gate stays CLI-only so a click can never ship
+anything); no real model runners yet, so panes still show mock
+agents. Those are the gap to 10/10, not hidden polish.
 
 ## Quickstart
 
@@ -286,11 +314,11 @@ python3 scripts/make_assets.py           # docs/assets/hero.png, icon.png, favic
   vector Brain (search is substring over local events, by design);
   vendor runners (Codex, OpenCode, Pi, Goose, Crush, etc.);
   real curses TUI on Windows (stock Windows Python has no curses —
-  `watch --panes` is the portable UI there, `watch --tui` is
-  interactive where curses exists).
+  the dashboard is the easy UI there, `watch --panes` / the static
+  TUI render is the portable terminal UI).
 - **Still needs a Windows live run to prove it:** `run "hello"`
   and `battle` on Windows, a real model/CLI runner replacing
-  `MockAgent`, a real TUI pane render on a Windows terminal, and
+  `MockAgent`, a real dashboard screenshot on a Windows browser, and
   a real approval-gate ship flow.
 
 ## Licence

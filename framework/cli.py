@@ -10,7 +10,7 @@ import argparse
 import json
 import sys
 
-from . import brain, contracts, goals, learning, mcp, router, scheduler, skills, tui, watch
+from . import brain, contracts, dashboard, goals, learning, mcp, router, scheduler, skills, tui, watch
 from .gate import GateBlocked as _GateBlocked
 from .court import judge
 from .gate import GateBlocked, require_approval
@@ -130,9 +130,9 @@ def cmd_ship(args) -> int:
 def cmd_watch(args) -> int:
     store = _store(args)
     if getattr(args, "tui", False):
-        return tui.run_tui(store)
+        return tui.run_tui(store, filter_term=getattr(args, "filter", "") or "")
     if getattr(args, "panes", False):
-        print(tui.render_panes(store.load()))
+        print(tui.render_panes(store.load(), filter_term=getattr(args, "filter", "") or ""))
         return 0
     print(watch.stream_json(store) if args.json else watch.render_status(store))
     return 0
@@ -141,9 +141,18 @@ def cmd_watch(args) -> int:
 def cmd_tui(args) -> int:
     store = _store(args)
     if getattr(args, "panes", False):
-        print(tui.render_panes(store.load()))
+        print(tui.render_panes(store.load(), filter_term=getattr(args, "filter", "") or ""))
         return 0
-    return tui.run_tui(store)
+    return tui.run_tui(store, filter_term=getattr(args, "filter", "") or "")
+
+
+def cmd_dashboard(args) -> int:
+    return dashboard.run_dashboard(_store(args), port=args.port)
+
+
+def cmd_help(args) -> int:
+    print(tui.HELP_TEXT)
+    return 0
 
 
 def cmd_status(args) -> int:
@@ -378,10 +387,17 @@ def build_parser() -> argparse.ArgumentParser:
     w = sub.add_parser("watch", help="live watch panes / JSON stream")
     w.add_argument("--panes", action="store_true", help="render the actual TUI panes as text (capturable)")
     w.add_argument("--tui", action="store_true", help="interactive TUI (curses where available, static panes otherwise)")
+    w.add_argument("--filter", default="", help="filter panes by name/status, e.g. --filter agent-a")
     w.set_defaults(func=cmd_watch)
     tu = sub.add_parser("tui", help="open the actual UI (same as watch --tui)")
     tu.add_argument("--panes", action="store_true", help="render panes as text instead of interactive TUI")
+    tu.add_argument("--filter", default="", help="filter panes by name/status")
     tu.set_defaults(func=cmd_tui)
+    da = sub.add_parser("dashboard", help="clickable local web dashboard (127.0.0.1 only, no new dependencies)")
+    da.add_argument("--port", type=int, default=dashboard.DEFAULT_PORT)
+    da.set_defaults(func=cmd_dashboard)
+    he = sub.add_parser("help", help="full help screen: keys, tabs, approval rule, Start Here")
+    he.set_defaults(func=cmd_help)
     st = sub.add_parser("status", help="sections and agents")
     st.set_defaults(func=cmd_status)
     k = sub.add_parser("kill", help="kill switch: stop everything instantly")
