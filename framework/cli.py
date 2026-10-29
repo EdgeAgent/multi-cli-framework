@@ -10,7 +10,7 @@ import argparse
 import json
 import sys
 
-from . import brain, contracts, dashboard, goals, learning, mcp, router, scheduler, skills, tui, watch
+from . import brain, contracts, dashboard, goals, learning, mcp, menu, router, scheduler, skills, tui, watch
 from .gate import GateBlocked as _GateBlocked
 from .court import judge
 from .gate import GateBlocked, require_approval
@@ -153,6 +153,27 @@ def cmd_dashboard(args) -> int:
 def cmd_help(args) -> int:
     print(tui.HELP_TEXT)
     return 0
+
+
+def cmd_menu(args) -> int:
+    """Branded startup menu. No args = interactive loop (static mode
+    prints the menu and reads a number — works on stock Windows)."""
+    store = _store(args)
+    choice = getattr(args, "choice", "") or ""
+    if choice:
+        result = dispatch_choice(store, choice)
+        print(result.get("text") or result["message"])
+        return 0
+    return menu.run_menu_loop(store)
+
+
+def dispatch_choice(store, choice: str) -> dict:
+    """One non-interactive menu pick (used by `menu --choice` and tests)."""
+    result = menu.dispatch(store, choice)
+    if result["action"] == "kill" and result["message"].startswith("Kill Switch needs"):
+        # One-shot CLI pick must never kill: confirmation lives in the loop.
+        return result
+    return result
 
 
 def cmd_status(args) -> int:
@@ -398,6 +419,9 @@ def build_parser() -> argparse.ArgumentParser:
     da.set_defaults(func=cmd_dashboard)
     he = sub.add_parser("help", help="full help screen: keys, tabs, approval rule, Start Here")
     he.set_defaults(func=cmd_help)
+    me = sub.add_parser("menu", help="branded startup menu (also shown by `run.py` with no args)")
+    me.add_argument("--choice", default="", help="one menu pick, non-interactive, e.g. --choice 3")
+    me.set_defaults(func=cmd_menu)
     st = sub.add_parser("status", help="sections and agents")
     st.set_defaults(func=cmd_status)
     k = sub.add_parser("kill", help="kill switch: stop everything instantly")
@@ -501,6 +525,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if not argv:
+        # `python run.py` with no args lands on the branded startup menu.
+        return menu.run_menu_loop(StateStore("."))
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)

@@ -3,7 +3,7 @@
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python)
 ![License: MIT](https://img.shields.io/badge/License-MIT-32b6a1?style=flat-square)
 ![Local-first](https://img.shields.io/badge/Local--first-yes-8c7bff?style=flat-square)
-![Tests: 37 passing](https://img.shields.io/badge/Tests-37%20passing-3fb950?style=flat-square)
+![Tests: 61 passing](https://img.shields.io/badge/Tests-61%20passing-3fb950?style=flat-square)
 ![Status: Skeleton](https://img.shields.io/badge/Status-skeleton-ffd65a?style=flat-square)
 
 <p align="center">
@@ -53,6 +53,38 @@ Text capture: [`docs/screenshots/tui-battle.txt`](docs/screenshots/tui-battle.tx
 > http://127.0.0.1:8767. A real Windows screenshot of the dashboard
 > is still needed to prove it renders there (see Honest status).
 
+## Startup menu — branded, Hermes-style landing screen
+
+```bash
+python3 run.py          # no args: the branded startup menu (also: run.py menu)
+python3 run.py menu --choice 3   # one non-interactive pick (3 = Goals)
+```
+
+The menu you land on when you start the system, before you get into
+agents: big **⚖ BATTLE COURT** branding, the tagline *"Parallel
+agents. Judged. Learned from. Never auto-shipped."*, the version
+(skeleton v0.1.0-skeleton, honest), a local-only status line, and a
+numbered menu — 1 Watch live, 2 Dashboard, 3 Goals, 4 Tasks,
+5 What's Next, 6 Cron & Loops, 7 Environments, 8 Battle Court,
+9 Skills & MCP, 10 Brain, 11 Help, plus K Kill Switch and 0 Quit.
+The same menu, same numbering and order, is the dashboard home page
+(clickable buttons) and the first screen of the curses TUI (arrows +
+Enter, or a single digit 1-9; press `m` later to come back to it).
+In static / stock-Windows mode it prints as text and you type a
+number — that mode always works.
+
+Footer, honestly labelled: *"Powered by the Hermes pattern — router
++ workers + Brain + approval gate."* This is Battle Court, not Hermes
+itself — no Hermes code is used here, and no Hermes logo exists here
+to copy. The menu never approves, ships, sends, pays, deletes, or
+merges anything; the Kill Switch on it needs explicit confirmation
+(type KILL, or two presses in curses), never a default.
+
+Exact menu text: [`docs/screenshots/startup-menu.txt`](docs/screenshots/startup-menu.txt)
+(rendered from the real `framework/menu.py` output — the capture
+script does not yet render this screen to PNG, so the text capture
+is the honest record, not a faked screenshot).
+
 ## The easy UI — dashboard first, TUI second
 
 ```bash
@@ -83,7 +115,7 @@ agents. Those are the gap to 10/10, not hidden polish.
 
 ```bash
 # Python 3.10+, no dependencies, no install step
-python3 -m unittest discover -s tests -v   # 37 tests, offline, mock agents only
+python3 -m unittest discover -s tests -v   # 61 tests, offline, mock agents only
 
 python3 run.py run "hello"                 # 2 parallel agents, 2 sandboxes, live watch
 python3 run.py tui                          # the actual UI (interactive where curses exists)

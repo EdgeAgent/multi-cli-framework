@@ -1,0 +1,31 @@
+====================================================================================================
+
+  ⚖  BATTLE COURT
+  Parallel agents. Judged. Learned from. Never auto-shipped.
+
+  Version: skeleton v0.1.0-skeleton  ·  Local-only  ·  Mock agents, $0 spend
+  Status: tests passing — re-run the suite to confirm:
+            python3 -m unittest discover -s tests
+  Right now: 0 sections, 0 agents
+
+----------------------------------------------------------------------------------------------------
+  PICK A NUMBER  (type it and press Enter; 0 quits)
+     1. Watch live — Live agent panes + log — the watch screen.
+     2. Dashboard — Clickable web dashboard — needs a browser, see the next step below.
+     3. Goals — Long-term goals, with progress.
+     4. Tasks — Current tasks, with status and owner agent.
+     5. What's Next — Next deliverables due, in order.
+     6. Cron & Loops — Scheduled jobs and loops: next run, last run, status.
+     7. Environments — Agent setups: section + agent + sandbox + model + skills + MCP.
+     8. Battle Court — Judge two candidates — winner staged only, never auto-shipped.
+     9. Skills & MCP — Playbooks agents run off, and MCP tool servers.
+    10. Brain — Local memory: runs, skill uses, MCP calls, battles, verdicts.
+    11. Help — Full help: keys, tabs, approval rule, Start Here.
+     K. Kill Switch — stop EVERYTHING (type KILL to confirm)
+     0. Quit — leave the menu, framework keeps its state
+----------------------------------------------------------------------------------------------------
+  Powered by the Hermes pattern — router + workers + Brain + approval gate. This is Battle Court, not Hermes itself: no Hermes code or logo is used here.
+  Safety: this menu never approves, ships, sends, pays, deletes, or merges. Approval is CLI-only: ship --approve --confirm <candidate>.
+  Dashboard (easiest on Windows): python run.py dashboard
+  then open http://127.0.0.1:8767  (local-only, nothing leaves your machine)
+====================================================================================================

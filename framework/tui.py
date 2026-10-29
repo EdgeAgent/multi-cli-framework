@@ -549,6 +549,13 @@ def run_tui(store: StateStore, filter_term: str = "") -> int:
         filter_mode = False
         pending_all_pause = False
         notice = ""
+        # Branded startup menu is the first screen in the TUI.
+        # Lazy import: menu.py imports tui.py, so a top-level import
+        # here would be circular.
+        from . import menu as _menu
+        show_menu = True
+        menu_idx = 0
+        menu_screen_text = None
         while True:
             state = store.load()
             keys = agent_keys(state)
@@ -558,7 +565,13 @@ def run_tui(store: StateStore, filter_term: str = "") -> int:
             else:
                 selected = None
             stdscr.erase()
-            if show_help:
+            if menu_screen_text is not None:
+                text = menu_screen_text + "\n\n(Press any key to return to the startup menu.)"
+            elif show_menu:
+                text = _menu.render_menu(state) + (
+                    "\n  Arrows / j / k move · Enter picks · 1-9 picks directly · "
+                    "0 / q quits · m returns to this menu later")
+            elif show_help:
                 text = HELP_TEXT
             elif MENU_TABS[active_tab_idx] == "Watch":
                 text = render_panes(state, width=100, selected=selected,
@@ -581,6 +594,58 @@ def run_tui(store: StateStore, filter_term: str = "") -> int:
                 continue
             notice = ""
             pending_all_pause = pending_all_pause and chr(ch) != "P" if 0 <= ch < 256 else pending_all_pause
+            if menu_screen_text is not None:
+                # Any key returns to the startup menu.
+                menu_screen_text = None
+                show_menu = True
+                continue
+            if show_menu:
+                if ch in (258,):  # KEY_DOWN
+                    menu_idx = min(len(_menu.MENU_ITEMS) - 1, menu_idx + 1)
+                    continue
+                if ch in (259,):  # KEY_UP
+                    menu_idx = max(0, menu_idx - 1)
+                    continue
+                _mkey = chr(ch) if 0 <= ch < 256 else ""
+                if _mkey == "j":
+                    menu_idx = min(len(_menu.MENU_ITEMS) - 1, menu_idx + 1)
+                    continue
+                if _mkey == "k":
+                    menu_idx = max(0, menu_idx - 1)
+                    continue
+                if _mkey in ("q", "0"):
+                    break
+                if ch in (10, 13):  # Enter: pick the highlighted item
+                    _item = _menu.MENU_ITEMS[menu_idx]
+                    _result = _menu.dispatch(store, _item[0])
+                    if _result["action"] == "watch":
+                        show_menu = False
+                        active_tab_idx = 0
+                    elif _result["action"] == "help":
+                        show_menu = False
+                        show_help = True
+                    elif _result["action"] in ("goals", "tasks", "deliverables", "cron", "environments"):
+                        show_menu = False
+                        active_tab_idx = 1
+                    else:
+                        menu_screen_text = _result.get("text") or _result["message"]
+                    continue
+                if _mkey.isdigit() and _mkey != "0":
+                    _picked = _menu.MENU_ITEMS[int(_mkey) - 1]
+                    _result = _menu.dispatch(store, _picked[0])
+                    if _result["action"] == "watch":
+                        show_menu = False
+                        active_tab_idx = 0
+                    elif _result["action"] == "help":
+                        show_menu = False
+                        show_help = True
+                    elif _result["action"] in ("goals", "tasks", "deliverables", "cron", "environments"):
+                        show_menu = False
+                        active_tab_idx = 1
+                    else:
+                        menu_screen_text = _result.get("text") or _result["message"]
+                    continue
+                continue
             if ch == 27:  # Esc: close help / clear filter
                 show_help = False
                 cur_filter = ""
@@ -602,6 +667,9 @@ def run_tui(store: StateStore, filter_term: str = "") -> int:
                 filter_mode = True
                 continue
             key = chr(ch) if 0 <= ch < 256 else ""
+            if key == "m" and not show_help:
+                show_menu = True
+                continue
             if key == "q" and not show_help:
                 break
             if key in ("?", "h"):

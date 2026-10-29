@@ -29,7 +29,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-from . import goals, scheduler, tui
+from . import goals, menu, scheduler, tui
 from .state import StateStore
 
 DEFAULT_PORT = 8767
@@ -58,6 +58,26 @@ input,select{margin:4px;padding:6px}
 <p class="note">LOCAL_ONLY_NOTE</p>
 <p><strong>Approval rule:</strong> this dashboard NEVER approves a ship.
 To approve, run in a terminal: <code>ship --approve --confirm &lt;candidate&gt;</code></p>
+<div id="startup-menu"><h2>⚖ BATTLE COURT — Startup Menu</h2>
+<p><strong>Parallel agents. Judged. Learned from. Never auto-shipped.</strong> &nbsp; Version: skeleton v0.1.0-skeleton &nbsp;·&nbsp; Local-only &nbsp;·&nbsp; Mock agents, $0 spend</p>
+<p>Pick a section — same numbering and order as the <code>run.py menu</code> startup menu:</p>
+<ol>
+<li><button onclick="document.querySelector('[data-tab=watch]').click()">1. Watch live</button></li>
+<li><button onclick="document.querySelector('[data-tab=watch]').click()">2. Dashboard</button> (you are here — this page)</li>
+<li><button onclick="document.querySelector('[data-tab=goals]').click()">3. Goals</button></li>
+<li><button onclick="document.querySelector('[data-tab=tasks]').click()">4. Tasks</button></li>
+<li><button onclick="document.querySelector('[data-tab=next]').click()">5. What's Next</button></li>
+<li><button onclick="document.querySelector('[data-tab=cron]').click()">6. Cron &amp; Loops</button></li>
+<li><button onclick="document.querySelector('[data-tab=envs]').click()">7. Environments</button></li>
+<li><button onclick="document.querySelector('[data-tab=watch]').click()">8. Battle Court</button> (run in a terminal: <code>battle --task &lt;task&gt; --pick a|b|none</code> — winner staged only, never auto-shipped)</li>
+<li><button onclick="document.querySelector('[data-tab=help]').click()">9. Skills &amp; MCP</button> (see Help, and run <code>skill list</code> / <code>mcp list</code>)</li>
+<li><button onclick="document.querySelector('[data-tab=help]').click()">10. Brain</button> (run <code>brain list</code> in a terminal)</li>
+<li><button onclick="document.querySelector('[data-tab=help]').click()">11. Help</button></li>
+<li><button class="kill" onclick="kill(this)">K. Kill Switch — stop everything (click twice to confirm)</button></li>
+<li><button onclick="alert('Close this tab to leave the dashboard. Framework state is kept.')">0. Quit</button></li>
+</ol>
+<p class="note">Powered by the Hermes pattern — router + workers + Brain + approval gate. This is Battle Court, not Hermes itself: no Hermes code or logo is used here.</p>
+<p><strong>Safety:</strong> this menu never approves, ships, sends, pays, deletes, or merges. Approval is CLI-only: <code>ship --approve --confirm &lt;candidate&gt;</code></p></div>
 <div class="tabs">
 <button data-tab="watch" class="active">Watch</button>
 <button data-tab="goals">Goals</button>
@@ -79,7 +99,7 @@ To approve, run in a terminal: <code>ship --approve --confirm &lt;candidate&gt;<
 <button onclick="act('resume')">Resume selected agent</button>
 <button onclick="act('takeover')">Take over selected agent</button>
 <button onclick="act('stop')">Stop selected agent</button>
-<button id="killbtn" class="kill" onclick="kill()">KILL SWITCH — stop everything</button>
+<button id="killbtn" class="kill" onclick="kill(this)">KILL SWITCH — stop everything</button>
 <h3>Approval queue</h3><div id="approvals"></div>
 <h3>Log</h3><pre id="log"></pre></div>
 <div id="goals" class="tab"><h2>Goals</h2><div id="goals-list"></div>
@@ -123,7 +143,7 @@ async function load(){
  document.getElementById('envs-list').innerHTML=Object.keys(s.environments||{}).map(n=>n+': '+(s.environments[n].agent||'')).join('<br>')||'(no environments yet)';}
 async function act(action){ if(!selected){alert('Click an agent first to select it.');return;}
  await api('/api/agent/action',{agent:selected,action}); load();}
-async function kill(){ const b=document.getElementById('killbtn');
+async function kill(btn){ const b=btn||document.getElementById('killbtn');
  if(!killArmed){killArmed=true; b.textContent='Click again to CONFIRM Kill Switch'; b.classList.add('armed'); return;}
  await api('/api/kill',{confirm:'KILL'}); killArmed=false; b.textContent='KILL SWITCH — stop everything'; b.classList.remove('armed'); load();}
 async function addItem(e,kind){ e.preventDefault(); const f=new FormData(e.target), o={};
@@ -158,6 +178,7 @@ def state_view(store: StateStore) -> dict:
         "log": panes["log"],
         "killed": state.get("killed", False),
         "help": tui.HELP_TEXT,
+        "menu": [{"number": n, "label": l, "action": a} for n, l, a, _d in menu.MENU_ITEMS],
     }
 
 
