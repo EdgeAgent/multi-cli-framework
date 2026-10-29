@@ -3,7 +3,7 @@
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python)
 ![License: MIT](https://img.shields.io/badge/License-MIT-32b6a1?style=flat-square)
 ![Local-first](https://img.shields.io/badge/Local--first-yes-8c7bff?style=flat-square)
-![Tests: 24 passing](https://img.shields.io/badge/Tests-24%20passing-3fb950?style=flat-square)
+![Tests: 37 passing](https://img.shields.io/badge/Tests-37%20passing-3fb950?style=flat-square)
 ![Status: Skeleton](https://img.shields.io/badge/Status-skeleton-ffd65a?style=flat-square)
 
 <p align="center">
@@ -55,7 +55,7 @@ Text capture: [`docs/screenshots/tui-battle.txt`](docs/screenshots/tui-battle.tx
 
 ```bash
 # Python 3.10+, no dependencies, no install step
-python3 -m unittest discover -s tests -v   # 24 tests, offline, mock agents only
+python3 -m unittest discover -s tests -v   # 37 tests, offline, mock agents only
 
 python3 run.py run "hello"                 # 2 parallel agents, 2 sandboxes, live watch
 python3 run.py tui                          # the actual UI (interactive where curses exists)
