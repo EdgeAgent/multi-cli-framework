@@ -1,0 +1,17 @@
+====================================================================================================
+  BATTLE COURT — MULTI-CLI AGENT FRAMEWORK  ·  live watch (mock agents, $0 spend)
+  Keys: q quit · p pause · r resume · t takeover · s stop · k KILL SWITCH · a approval note
+====================================================================================================
+┌─ BOSS ───────────────────────────────────────────────────────────────────────────────────────────┐
+│ sections: 0   agents: 0   killed: False                                                          │
+│ Approval gate: ON — ship needs --approve --confirm <candidate>. Learning: always-on, proposal-o… │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─ AGENTS ─────────────────────────────────────────────────────────────────────────────────────────┐
+│ (no agents — spawn one: agent spawn <section> <name>)                                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─ LOG ────────────────────────────────────────────────────────────────────────────────────────────┐
+│ RUN Build hello: candidate-a=done, candidate-b=done                                              │
+│ COURT battle-1: winner winner=candidate-a                                                        │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+Watch is read-only by default. Pause / takeover / stop / approve are explicit actions,
+not typing into an agent terminal.

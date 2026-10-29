@@ -1,0 +1,25 @@
+====================================================================================================
+  BATTLE COURT — MULTI-CLI AGENT FRAMEWORK  ·  live watch (mock agents, $0 spend)
+  Keys: q quit · p pause · r resume · t takeover · s stop · k KILL SWITCH · a approval note
+====================================================================================================
+┌─ BOSS ───────────────────────────────────────────────────────────────────────────────────────────┐
+│ sections: 1   agents: 2   killed: False                                                          │
+│ Approval gate: ON — ship needs --approve --confirm <candidate>. Learning: always-on, proposal-o… │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─ builder/agent-a ────────────────────────────┐ ┌─ builder/agent-b ────────────────────────────┐
+│ model:  glm-5.3-flash:free                   │ │ model:  qwen3-coder:free                     │
+│ status: ● working                            │ │ status: ● working                            │
+│ tool:   finished                             │ │ tool:   finished                             │
+│ last:   output.txt: DONE                     │ │ last:   output.txt: DONE                     │
+│ cost:   $0.00   time: 0.011s                 │ │ cost:   $0.00   time: 0.011s                 │
+└──────────────────────────────────────────────┘ └──────────────────────────────────────────────┘
+┌─ TOMBSTONE — scout deleted ──────────────────────────────────────────────────────────────────────┐
+│ deleted at 2026-10-29T21:00:44Z · archived at /tmp/multi-cli-demo/.framework/archive/scout-2026… │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─ LOG ────────────────────────────────────────────────────────────────────────────────────────────┐
+│ RUN hello: agent-a=done, agent-b=done                                                            │
+│ RUN Build hello: candidate-a=done, candidate-b=done                                              │
+│ COURT battle-1: winner winner=candidate-a                                                        │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+Watch is read-only by default. Pause / takeover / stop / approve are explicit actions,
+not typing into an agent terminal.

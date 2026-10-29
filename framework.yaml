@@ -1,0 +1,27 @@
+# Multi-CLI agent framework — example config (skeleton, not released)
+# Sections are dynamic: add/delete them live with `framework section add/delete`.
+# This file is an example starting point, not a fixed fleet.
+version: "0.1.0-skeleton"
+sections:
+  - name: scout
+    role: researcher
+    model: local
+  - name: builder
+    role: builder
+    model: openrouter-free
+  - name: reviewer
+    role: reviewer
+    model: local
+approval_gate:
+  # IMMUTABLE: learning, agents, and battle winners can never change these.
+  require_approval_for: [send, ship, pay, delete, merge]
+  ship_requires_confirm: true
+kill_switch: true
+sandbox:
+  default: worktree-directory  # one directory per agent; containers later, never required
+  network_by_default: false
+learning:
+  mode: always-on-proposal-only
+  max_rule_changes_per_cycle: 1
+  cycle: weekly
+  immutable_core: [approval_gate, safety_list, scrub_list, keys, kill_switch, auto_send, auto_ship, auto_pay, auto_delete, auto_merge]

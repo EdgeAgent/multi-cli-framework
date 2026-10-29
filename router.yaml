@@ -1,0 +1,15 @@
+# Model router — data, not code. Learning proposes changes here, one rule
+# at a time, with human approval. It never rewrites this silently.
+routes:
+  draft:   {provider: ollama,          model: qwen3-coder:30b,      tier: local}
+  scout:   {provider: ollama,          model: qwen3-coder:30b,      tier: local}
+  build:   {provider: openrouter-free, model: glm-5.3-flash:free,   tier: free}
+  refactor:{provider: openrouter-free, model: glm-5.3-flash:free,   tier: free}
+  review:  {provider: ollama,          model: devstral-small-2,     tier: local}
+  test:    {provider: ollama,          model: qwen3-coder:30b,      tier: local}
+  plan:    {provider: frontier,        model: claude-sonnet-4.6,    tier: paid}
+  judge:   {provider: frontier,        model: claude-sonnet-4.6,    tier: paid}
+fallback_chain: [free, local, pause]
+# Fallback rule: free -> local -> pause. Never free -> paid on an error,
+# and never silently upgrade to a paid tier without explicit approval.
+cost_cap_usd_per_run: 0.0  # skeleton: mock agents spend $0; set a real cap before any paid runner is wired
