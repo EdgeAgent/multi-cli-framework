@@ -1,0 +1,12 @@
+# MCP servers — registry example (skeleton: mock calls, no real server required)
+# Real MCP protocol negotiation (JSON-RPC over stdio) is NOT wired yet.
+# Add a server with: framework mcp add --name <name> --command <cmd> --tools a,b
+servers:
+  - name: rea
+    command: npx rea-agents
+    transport: stdio
+    tools: [inspect, decompile]
+  - name: filesystem
+    command: local-filesystem
+    transport: stdio
+    tools: [read, list]

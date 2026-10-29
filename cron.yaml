@@ -1,0 +1,5 @@
+# Cron jobs — example mirror (skeleton). Runtime source is state['cron_jobs'].
+# Add a job with: framework cron add <name> --schedule 'every 60 minutes' --task <task>
+# Schedules: 'every N minutes|hours|days', daily/weekly/hourly, or 'M H * * *'
+# (day fields must be * in the skeleton — unparseable schedules are rejected, never guessed).
+jobs: []

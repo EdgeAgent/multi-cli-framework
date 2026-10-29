@@ -20,6 +20,17 @@ kill_switch: true
 sandbox:
   default: worktree-directory  # one directory per agent; containers later, never required
   network_by_default: false
+skills:
+  # Agents run off skills (playbooks in skills/), MCP tools (mcp.yaml),
+  # and Brain context — not just a model + prompt.
+  directory: skills/
+  examples: [code-review, test-runner, research, battle-judge]
+mcp:
+  config: mcp.yaml  # registry; skeleton calls are mocks, real MCP protocol is next
+  example_servers: [rea, filesystem]
+cron:
+  config: cron.yaml  # optional mirror; state['cron_jobs'] is the runtime source
+  jobs: []  # add with: framework cron add <name> --schedule 'every 60 minutes' --task <task>
 learning:
   mode: always-on-proposal-only
   max_rule_changes_per_cycle: 1

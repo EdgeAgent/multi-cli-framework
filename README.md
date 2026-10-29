@@ -203,6 +203,49 @@ A proposal touching the core is auto-rejected before it ever
 reaches a human. The worst a bad proposal can do is waste one
 approval click.
 
+## Skills, MCP, and Brain — what agents actually run off
+
+An agent run is **model + skills + MCP tools + Brain context**, not
+just a prompt:
+
+- **Skills** (`skills/`, Markdown playbooks): `code-review`,
+  `test-runner`, `research`, `battle-judge`. List with
+  `skill list`, add one with `skill add --file <path>`, use one with
+  `skill use <agent> <skill>`. Every skill use is recorded in the
+  Brain, so a run is auditable.
+- **MCP** (`mcp.yaml` registry): servers with a command, stdio
+  transport, tool list, and allow-list. `mcp list`, `mcp add`,
+  `mcp call --server <s> --tool <t>`. Skeleton calls are **mocks,
+  clearly labelled, no real server or network required to test**.
+  A dangerous MCP tool (send/ship/pay/delete/merge) is blocked by
+  the approval gate without explicit approval, every time.
+- **Brain** (local, file-first, no vector DB, no external service):
+  events for runs, skill uses, MCP calls, battle verdicts, goals,
+  tasks, loops, and learning. `brain search <term>`,
+  `brain show <id>`, `brain list`. An agent consults relevant past
+  events before it starts; that context is recorded on its run.
+
+## Goals, Tasks, What's Next, Environments, Cron & Loops
+
+- **Goals / Tasks / Deliverables** — stored locally in state, not a
+  new database: `goal add/list/progress`, `task add/list/status`,
+  `deliverable add/list/status`. What's Next is deliverables in due
+  order, open first. The TUI renders them as tabs:
+  `tabs` (Goals / Tasks / What's Next / Cron & Loops / Environments),
+  selectable in the curses TUI (g / t / w / c).
+- **Environments** — one action for a new agent:
+  `environment add <name> --model <m> --skills <s...> --mcp <s/t...>`.
+  It creates a section + agent + sandbox + model + skills + MCP
+  bundle, live, no restart. Deleting it uses normal section delete
+  (archive by default).
+- **Cron & Loops** — local scheduler, file-based, no cloud service:
+  `cron add <name> --schedule 'every 60 minutes' --task <task>`,
+  `cron list/delete/due`; `loop --mode repeat|until_success|gated
+  --max N`. A gated loop re-checks the approval gate **before every
+  iteration** that would send/ship/pay/delete/merge — a loop can
+  never auto-ship on any iteration. The kill switch stops all loops
+  and cron jobs instantly. Loop + cron runs are logged to the Brain.
+
 ## Configuration
 
 - `framework.yaml` — sections, approval gate, sandbox, learning
@@ -238,6 +281,9 @@ python3 scripts/make_assets.py           # docs/assets/hero.png, icon.png, favic
   proposal guard + one-rule apply, weekly cycle is config, not a
   scheduler); REA inspect (skeleton command is a read-only
   placeholder — morluto/rea MCP + Ghidra evidence is not wired);
+  real MCP server protocol (skeleton MCP calls are mocks, registry +
+  allow-list + gate + logging are real); real skill marketplace;
+  vector Brain (search is substring over local events, by design);
   vendor runners (Codex, OpenCode, Pi, Goose, Crush, etc.);
   real curses TUI on Windows (stock Windows Python has no curses —
   `watch --panes` is the portable UI there, `watch --tui` is

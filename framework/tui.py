@@ -128,6 +128,45 @@ def build_panes(state: dict) -> dict:
     }
 
 
+def render_tabs(state: dict, width: int = 100) -> str:
+    """Clickable/selectable tabs in text form: Goals / Tasks / What's Next
+    / Cron & Loops. In the curses TUI these are selectable sections
+    (keys g/t/w/c in run_tui's key map are documented here); in the
+    capturable render they are sections you can read and select by
+    name. Cron tab shows next run, last run, status per job."""
+    from .goals import whats_next
+
+    lines: list[str] = []
+    lines.append("=" * width)
+    lines.append("  TABS — click/select: [Goals]  [Tasks]  [What's Next / Deliverables]  [Cron & Loops]")
+    lines.append("  (curses keys: g Goals · t Tasks · w What's Next · c Cron — CLI: goal list / task list / deliverable list / cron list)")
+    lines.append("=" * width)
+    goal_lines = [f"#{g['id']} {g['title']} — {g['progress']}% [{g['status']}]"
+                  for g in state.get("goals", [])] or ["(no goals yet — goal add <title>)"]
+    lines.extend(_box("GOALS — long-term, with progress", goal_lines, width))
+    task_lines = [f"#{t['id']} {t['title']} — {t['status']} · owner={t.get('owner') or '—'} · section={t.get('section') or '—'}"
+                  for t in state.get("tasks", [])] or ["(no tasks yet — task add <title>)"]
+    lines.extend(_box("TASKS — current, with status + owner agent/section", task_lines, width))
+    del_lines = [f"#{d['id']} (due #{d['due_order']}) {d['title']} — {d['status']}"
+                 for d in whats_next_state(state)] or ["(no deliverables yet — deliverable add <title>)"]
+    lines.extend(_box("WHAT'S NEXT / DELIVERABLES — next due, in order", del_lines, width))
+    cron_lines = []
+    for j in state.get("cron_jobs", []):
+        cron_lines.append(f"#{j['id']} {j['name']} — {j['schedule']} · next={j.get('next_run') or '—'} · last={j.get('last_run') or '—'} · {j.get('status')}")
+    if not cron_lines:
+        cron_lines = ["(no cron jobs yet — cron add <name> --schedule 'every 60 minutes' --task <task>)"]
+    lines.extend(_box("CRON & LOOPS — next run, last run, status", cron_lines, width))
+    env_lines = [f"{name}: section={e.get('section')} agent={e.get('agent')} model={e.get('model')} skills={','.join(e.get('skills', [])) or '—'} mcp={','.join(e.get('mcp_tools', [])) or '—'}"
+                 for name, e in state.get("environments", {}).items()] or ["(no environments yet — environment add <name>)"]
+    lines.extend(_box("ENVIRONMENTS — one action: section + agent + sandbox + model + skills + MCP", env_lines, width))
+    return "\n".join(lines)
+
+
+def whats_next_state(state: dict) -> list[dict]:
+    items = sorted(state.get("deliverables", []), key=lambda d: d["due_order"])
+    return [i for i in items if i["status"] != "done"] + [i for i in items if i["status"] == "done"]
+
+
 def render_panes(state: dict, width: int = 100) -> str:
     """Render the full TUI screen as plain text (capturable, testable)."""
     panes = build_panes(state)

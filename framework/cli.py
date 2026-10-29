@@ -10,7 +10,8 @@ import argparse
 import json
 import sys
 
-from . import brain, contracts, learning, router, tui, watch
+from . import brain, contracts, goals, learning, mcp, router, scheduler, skills, tui, watch
+from .gate import GateBlocked as _GateBlocked
 from .court import judge
 from .gate import GateBlocked, require_approval
 from .orchestrator import MockAgent, run_parallel
@@ -37,7 +38,10 @@ def cmd_run(args) -> int:
         for c in conflicts:
             print(f"  {c['kind']}: {c['item']} declared by {c['agents']}")
         return 2
-    agents = [MockAgent(name, router.route("build")["model"]) for name in args.agents]
+    skill_list = getattr(args, "skills", None) or []
+    mcp_list = getattr(args, "mcp", None) or []
+    agents = [MockAgent(name, router.route("build")["model"], skills=skill_list, mcp_tools=mcp_list)
+              for name in args.agents]
     results = run_parallel(store, args.task, agents, section=args.section)
     print(watch.render_status(store))
     print(f"\nRun complete: {len(results)} agents, " + ", ".join(f"{r['agent']}={r['status']}" for r in results))
@@ -170,6 +174,137 @@ def cmd_learn(args) -> int:
     return 0
 
 
+def cmd_skill(args) -> int:
+    store = _store(args)
+    if args.action == "list":
+        _out(args, [{k: v for k, v in s.items() if k != "text"} for s in skills.list_skills(store)])
+    elif args.action == "add":
+        _out(args, skills.add_skill(store, args.file))
+    elif args.action == "use":
+        skill = skills.use_skill(store, args.agent, args.skill)
+        print(f"Agent {args.agent} used skill {skill['name']}: {skill['description']}")
+        print("Steps: " + "; ".join(skill["steps"]))
+    return 0
+
+
+def cmd_mcp(args) -> int:
+    store = _store(args)
+    if args.action == "list":
+        _out(args, mcp.list_servers(store))
+    elif args.action == "add":
+        tools = [t.strip() for t in (args.tools or "").split(",") if t.strip()]
+        _out(args, mcp.add_server(store, args.name, command=args.command, transport=args.transport, tools=tools))
+    elif args.action == "call":
+        try:
+            _out(args, mcp.call_tool(store, args.server, args.tool, approve=args.approve, confirm=args.confirm or ""))
+        except _GateBlocked as exc:
+            print(exc)
+            return 5
+        except ValueError as exc:
+            print(f"MCP BLOCKED: {exc}")
+            return 7
+    return 0
+
+
+def cmd_brain(args) -> int:
+    store = _store(args)
+    if args.action == "search":
+        _out(args, brain.search(store, args.term or ""))
+    elif args.action == "show":
+        try:
+            idx = int(args.term) if args.term else args.index
+            _out(args, brain.show(store, idx))
+        except ValueError as exc:
+            print(f"BRAIN: {exc}")
+            return 7
+    elif args.action == "list":
+        _out(args, brain.events(store))
+    return 0
+
+
+def cmd_goal(args) -> int:
+    store = _store(args)
+    if args.action == "add":
+        _out(args, goals.add_goal(store, args.title, progress=args.progress))
+    elif args.action == "list":
+        _out(args, store.load()["goals"])
+    elif args.action == "progress":
+        _out(args, goals.set_goal_progress(store, args.id, args.progress))
+    return 0
+
+
+def cmd_task(args) -> int:
+    store = _store(args)
+    if args.action == "add":
+        _out(args, goals.add_task(store, args.title, owner=args.owner, section=args.section))
+    elif args.action == "list":
+        _out(args, store.load()["tasks"])
+    elif args.action == "status":
+        _out(args, goals.set_task_status(store, args.id, args.status))
+    return 0
+
+
+def cmd_deliverable(args) -> int:
+    store = _store(args)
+    if args.action == "add":
+        _out(args, goals.add_deliverable(store, args.title))
+    elif args.action == "list":
+        _out(args, goals.whats_next(store))
+    elif args.action == "status":
+        _out(args, goals.set_deliverable_status(store, args.id, args.status))
+    return 0
+
+
+def cmd_environment(args) -> int:
+    store = _store(args)
+    if args.action == "add":
+        _out(args, goals.add_environment(store, args.name, model=args.model,
+                                         skills=args.skills or [], mcp_tools=args.mcp or []))
+    elif args.action == "list":
+        _out(args, store.load().get("environments", {}))
+    return 0
+
+
+def cmd_cron(args) -> int:
+    store = _store(args)
+    if args.action == "add":
+        _out(args, scheduler.add_job(store, args.name, args.schedule, args.task,
+                                     section=args.section, model=args.model,
+                                     skills=args.skills or [], mcp_tools=args.mcp or []))
+    elif args.action == "list":
+        _out(args, scheduler.list_jobs(store))
+    elif args.action == "delete":
+        try:
+            _out(args, scheduler.delete_job(store, args.id))
+        except ValueError as exc:
+            print(f"CRON: {exc}")
+            return 7
+    elif args.action == "due":
+        _out(args, scheduler.due_jobs(store))
+    return 0
+
+
+def cmd_loop(args) -> int:
+    store = _store(args)
+    # Demo loop body: a mock task that succeeds on the configured iteration.
+    succeed_on = args.succeed_on
+
+    def _task(i: int) -> dict:
+        return {"status": "PASS" if i == succeed_on else "FAIL", "iteration": i}
+
+    summary = scheduler.run_loop(store, _task, mode=args.mode, max_iterations=args.max,
+                                 gated_action=args.gated, approve=args.approve,
+                                 confirm=args.confirm or "")
+    _out(args, summary)
+    return 0
+
+
+def cmd_tabs(args) -> int:
+    store = _store(args)
+    print(tui.render_tabs(store.load()))
+    return 0
+
+
 def cmd_rea(args) -> int:
     """REA inspect — read-only, skeleton placeholder.
 
@@ -193,6 +328,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("task")
     r.add_argument("--agents", nargs="+", default=["agent-a", "agent-b"])
     r.add_argument("--section", default="default")
+    r.add_argument("--skills", nargs="*", default=[])
+    r.add_argument("--mcp", nargs="*", default=[], help="MCP tools as server/tool, e.g. rea/inspect")
     r.set_defaults(func=cmd_run)
 
     s = sub.add_parser("section", help="add / list / delete a section")
@@ -258,6 +395,88 @@ def build_parser() -> argparse.ArgumentParser:
     le.add_argument("--index", type=int, default=0)
     le.add_argument("--approve", action="store_true")
     le.set_defaults(func=cmd_learn)
+
+    sk = sub.add_parser("skill", help="list / add / use a skill playbook")
+    sk.add_argument("action", choices=["list", "add", "use"])
+    sk.add_argument("agent", nargs="?")
+    sk.add_argument("skill", nargs="?")
+    sk.add_argument("--file", default="")
+    sk.set_defaults(func=cmd_skill)
+
+    mc = sub.add_parser("mcp", help="list / add / call an MCP server (mock calls in skeleton)")
+    mc.add_argument("action", choices=["list", "add", "call"])
+    mc.add_argument("--name", default="")
+    mc.add_argument("--server", default="")
+    mc.add_argument("--tool", default="")
+    mc.add_argument("--command", default="")
+    mc.add_argument("--transport", default="stdio")
+    mc.add_argument("--tools", default="")
+    mc.add_argument("--approve", action="store_true")
+    mc.add_argument("--confirm", default="")
+    mc.set_defaults(func=cmd_mcp)
+
+    br = sub.add_parser("brain", help="search / show / list Brain events (local, file-first)")
+    br.add_argument("action", choices=["search", "show", "list"])
+    br.add_argument("term", nargs="?")
+    br.add_argument("--index", type=int, default=0)
+    br.set_defaults(func=cmd_brain)
+    # brain show takes the term position as index if given
+    # (handled in cmd_brain via args.index; 'brain show 3' sets term='3')
+
+    go = sub.add_parser("goal", help="add / list / progress a long-term goal")
+    go.add_argument("action", choices=["add", "list", "progress"])
+    go.add_argument("title", nargs="?")
+    go.add_argument("--id", type=int, default=0)
+    go.add_argument("--progress", type=int, default=0)
+    go.set_defaults(func=cmd_goal)
+
+    ta = sub.add_parser("task", help="add / list / status a current task")
+    ta.add_argument("action", choices=["add", "list", "status"])
+    ta.add_argument("title", nargs="?")
+    ta.add_argument("--id", type=int, default=0)
+    ta.add_argument("--status", default="todo")
+    ta.add_argument("--owner", default="")
+    ta.add_argument("--section", default="")
+    ta.set_defaults(func=cmd_task)
+
+    de = sub.add_parser("deliverable", help="add / list (What's Next) / status a deliverable")
+    de.add_argument("action", choices=["add", "list", "status"])
+    de.add_argument("title", nargs="?")
+    de.add_argument("--id", type=int, default=0)
+    de.add_argument("--status", default="pending")
+    de.set_defaults(func=cmd_deliverable)
+
+    en = sub.add_parser("environment", help="add / list an agent environment (section+agent+sandbox+model+skills+MCP)")
+    en.add_argument("action", choices=["add", "list"])
+    en.add_argument("name", nargs="?")
+    en.add_argument("--model", default="local")
+    en.add_argument("--skills", nargs="*", default=[])
+    en.add_argument("--mcp", nargs="*", default=[])
+    en.set_defaults(func=cmd_environment)
+
+    tabs = sub.add_parser("tabs", help="Goals / Tasks / What's Next / Cron & Loops / Environments tabs (text)")
+    tabs.set_defaults(func=cmd_tabs)
+
+    cr = sub.add_parser("cron", help="add / list / delete / due cron jobs (local scheduler)")
+    cr.add_argument("action", choices=["add", "list", "delete", "due"])
+    cr.add_argument("name", nargs="?")
+    cr.add_argument("--schedule", default="daily")
+    cr.add_argument("--task", default="")
+    cr.add_argument("--section", default="default")
+    cr.add_argument("--model", default="local")
+    cr.add_argument("--skills", nargs="*", default=[])
+    cr.add_argument("--mcp", nargs="*", default=[])
+    cr.add_argument("--id", type=int, default=0)
+    cr.set_defaults(func=cmd_cron)
+
+    lo = sub.add_parser("loop", help="repeat / until_success / gated loop (mock task body in skeleton)")
+    lo.add_argument("--mode", choices=["repeat", "until_success", "gated"], default="repeat")
+    lo.add_argument("--max", type=int, default=3)
+    lo.add_argument("--succeed-on", type=int, default=-1)
+    lo.add_argument("--gated", default="")
+    lo.add_argument("--approve", action="store_true")
+    lo.add_argument("--confirm", default="")
+    lo.set_defaults(func=cmd_loop)
 
     rea = sub.add_parser("rea", help="REA inspect (skeleton: read-only placeholder)")
     rea.add_argument("target")

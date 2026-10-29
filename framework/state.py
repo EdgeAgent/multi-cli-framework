@@ -24,6 +24,12 @@ def default_state() -> dict:
         "runs": [],
         "battles": [],
         "brain_events": [],
+        "mcp_servers": {},  # name -> {command, transport, tools[], allow[]}
+        "goals": [],  # {id, title, progress, status}
+        "tasks": [],  # {id, title, status, owner, section}
+        "deliverables": [],  # {id, title, due_order, status}
+        "environments": {},  # name -> {section, agent, model, skills[], mcp_tools[], sandbox}
+        "cron_jobs": [],  # scheduler jobs, see scheduler.py
         "tombstones": [],  # deleted sections, kept so the TUI can show them without crashing
         "learning_proposals": [],
         "router_overrides": {},
